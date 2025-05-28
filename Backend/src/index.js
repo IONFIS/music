@@ -24,11 +24,19 @@ const port = process.env.PORT;
 
 const httpServer= createServer(app);
 initializeSocket(httpServer);
-
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://music-rmhh.vercel.app",  // ✅ your frontend on Vercel
+];
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
-}));
+}));;
 
 app.use(express.json()); // Parse JSON data in req.body
 app.use(clerkMiddleware()); // Adds auth info to req (like user id)
