@@ -82,6 +82,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       localStorage.setItem("users", JSON.stringify(response.data));
     } catch (error) {
       console.error("❌ Error fetching users:", error);
+      console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
+
     }
   },
 
