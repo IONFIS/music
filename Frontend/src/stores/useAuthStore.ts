@@ -22,7 +22,7 @@ export const useAuthStore = create<useAuthStore> ((set)=>({
     checkAdminStatus: async () => {
         set({ isLoading: true, error: null });
         try {
-            const response = await axios.get("${import.meta.env.VITE_API_BASE_URL}/api/admin/check");
+            const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/admin/check`);
             console.log("API Response:", response.data); // Check what the API sends
             const isAdmin = response?.data?.admin;
             console.log("Setting isAdmin:", isAdmin); // Confirm what is being set

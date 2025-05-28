@@ -48,9 +48,8 @@ interface ChatStore {
   initializeUsers: () => Promise<void>;
 }
 
-const baseURL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
 
-const socket = io(baseURL, {
+const socket = io(import.meta.env.VITE_API_BASE_URL, {
   autoConnect: false,
   withCredentials: true,
 });
@@ -77,7 +76,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   fetchUsers: async () => {
     console.log("🚀 Fetching users...");
     try {
-      const response = await axios.get("${import.meta.env.VITE_API_BASE_URL}/api/users");
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/users`);
       console.log("✅ Users fetched:", response.data);
       set({ users: response.data });
       localStorage.setItem("users", JSON.stringify(response.data));
