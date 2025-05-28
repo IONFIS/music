@@ -77,7 +77,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   fetchUsers: async () => {
     console.log("🚀 Fetching users...");
     try {
-      const response = await axios.get("/api/users");
+      const response = await axios.get("${import.meta.env.VITE_API_BASE_URL}/api/users");
       console.log("✅ Users fetched:", response.data);
       set({ users: response.data });
       localStorage.setItem("users", JSON.stringify(response.data));
@@ -186,7 +186,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const response = await axios.get(`/api/users/messages/${userId}`);
+      const response = await axios.get(`${import.meta.env.VITE_API_BASE_URL}/api/users/messages/${userId}`);
       const messages = response.data;
       updateMessages(set, messages);
       set({ messages });
