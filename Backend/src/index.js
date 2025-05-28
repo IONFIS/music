@@ -49,7 +49,7 @@ app.use(fileUpload({
 }));
 
 // API routes
-app.use("/", userRoutes);
+app.use("/api", userRoutes);
 
   
 
