@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { ScrollArea } from "@/Components/ui/scroll-area";
 import { useMusicStore } from "@/stores/musicStore";
 import { Play } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 
 type Song = {
@@ -35,16 +36,18 @@ const AlbumPage = () => {
 
   const { currentSong, queue, setSongs, playSong, addToQueue } = useMusicStore();
 
-  useEffect(() => {
-    const fetchAlbumDetails = async () => {
-      try {
-        const response = await fetch(`https://saavn.dev/api/albums?id=${albumId}`);
-        if (!response.ok) throw new Error(`Server error: ${response.status}`);
+  const navigate = useNavigate();
 
-        const data = await response.json();
+  useEffect(() => {
+    const fetchAlbum = async () => {
+      try {
+        const res = await fetch(`https://saavn.dev/api/albums?id=${albumId}`);
+        if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
+        const data = await res.json();
+
         setAlbum(data?.data || null);
 
-        const songs = data?.data?.songs.map((song: any) => ({
+        const parsedSongs = data?.data?.songs.map((song: any) => ({
           id: song.id,
           name: song.name,
           url: song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url,
@@ -52,97 +55,106 @@ const AlbumPage = () => {
           image: song.image?.[1]?.url || song.image?.[0]?.url || "",
         }));
 
-        setSongs(songs);
+        setSongs(parsedSongs);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(err instanceof Error ? err.message : "Unknown error occurred");
       } finally {
         setLoading(false);
       }
     };
 
-    if (albumId) fetchAlbumDetails();
+    if (albumId) fetchAlbum();
   }, [albumId, setSongs]);
 
-  const handlePlayClick = (song: Song) => {
-    const downloadUrl = song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url;
-    if (!downloadUrl) {
-      alert("Song URL not available");
-      return;
-    }
+  const handlePlay = (song: Song) => {
+    const url = song.downloadUrl?.[4]?.url || song.downloadUrl?.[0]?.url;
+    if (!url) return alert("No playable URL available");
 
     const songData = {
       id: song.id,
       name: song.name,
-      url: downloadUrl,
+      url,
       artist: song.primaryArtists,
       image: song.image?.[1]?.url || song.image?.[0]?.url || "",
     };
 
     playSong(songData);
-    if (!queue.some((qSong) => qSong.id === song.id)) {
-      addToQueue(songData);
-    }
+    if (!queue.some((s) => s.id === song.id)) addToQueue(songData);
   };
 
   if (error) {
-    return <p className="text-center text-red-500">{error}</p>;
+    return <div className="text-center text-red-500 mt-10">{error}</div>;
   }
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4">
+    <div className="h-screen w-full bg-gradient-to-b from-black via-zinc-900 to-zinc-950 text-white flex flex-col px-4 py-4 overflow-hidden">
       {loading ? (
-        <p className="text-white">Loading album...</p>
+        <div className="flex justify-center items-center flex-1">
+          
+          <div className="h-10 w-10 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        </div>
       ) : album ? (
         <>
-          <div className="flex items-center gap-4 rounded-md bg-gradient-to-b from-[#5038a0]/80 via-zinc-900/80 to-zinc-900 p-4 animate-pulse">
+          {/* Header */}{/* Back Button */}
+<button
+  onClick={() => navigate(-1)} // or use `navigate('/search')` for fixed route
+  className="mb-4 flex items-center gap-2 text-zinc-300 hover:text-white transition"
+>
+  <ArrowLeft className="w-5 h-5" />
+  <span className="font-medium text-sm">Back to Search</span>
+</button>
+
+          <div className="flex flex-col sm:flex-row gap-4 items-center bg-gradient-to-r from-purple-900/70 to-zinc-800/80 p-4 rounded-xl shadow-md">
             <img
               src={album.image?.[1]?.url || album.image?.[0]?.url}
               alt={album.name}
-              className="size-32 rounded-md object-cover"
+              className="w-28 h-28 rounded-xl object-cover shadow-lg"
             />
-            <div>
-              <h1 className="text-3xl font-bold text-white">{album.name}</h1>
-              <p className="text-zinc-400">{album.songs.length} Songs</p>
+            <div className="text-center sm:text-left">
+              <h1 className="text-2xl sm:text-3xl font-bold">{album.name}</h1>
+              <p className="text-sm text-zinc-400 mt-1">{album.songs.length} Songs</p>
               {currentSong && (
-                <h2 className="text-xl font-bold text-white">
-                  Currently Playing: {currentSong.name}
-                </h2>
+                <p className="text-sm mt-2">
+                  <span className="text-purple-400 font-semibold">Now Playing:</span> {currentSong.name}
+                </p>
               )}
             </div>
           </div>
 
-          <ScrollArea className="h-[calc(100vh-300px)] w-full border rounded-md p-4">
-            {album.songs.map((song) => (
-              <div
-                key={song.id}
-                className="p-2 rounded-md flex items-center gap-3 hover:bg-zinc-800 cursor-pointer group"
-              >
-                <img
-                  src={song.image?.[1]?.url || song.image?.[0]?.url}
-                  alt={song.name}
-                  className="size-12 rounded-md object-cover"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-medium truncate">{song.name}</p>
-                  <p className="text-sm text-zinc-400">{song.primaryArtists}</p>
-                </div>
-                <p className="text-sm text-zinc-400">{formatDuration(song.duration)}</p>
-
-                <button
-                  onClick={() => handlePlayClick(song)}
-                  className="hidden group-hover:block text-white bg-purple-600 p-2 rounded-md hover:bg-purple-800 transition"
+          {/* Scrollable song list */}
+          <div className="flex-1 overflow-y-auto mt-4 custom-scrollbar pr-1">
+            <div className="space-y-3">
+              {album.songs.map((song) => (
+                <div
+                  key={song.id}
+                  className="flex items-center gap-3 bg-zinc-800/60 hover:bg-zinc-700 transition rounded-lg px-3 py-2 group"
                 >
-                  <Play className="size-5" />
-                </button>
-              </div>
-            ))}
-          </ScrollArea>
+                  <img
+                    src={song.image?.[1]?.url || song.image?.[0]?.url}
+                    alt={song.name}
+                    className="w-12 h-12 rounded-md object-cover"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-medium">{song.name}</p>
+                    <p className="text-xs text-zinc-400 truncate">{song.primaryArtists}</p>
+                  </div>
+                  <p className="text-xs text-zinc-400 hidden sm:block">
+                    {formatDuration(song.duration)}
+                  </p>
+                  <button
+                    onClick={() => handlePlay(song)}
+                    className="ml-2 bg-purple-600 hover:bg-purple-700 p-2 rounded-full hidden group-hover:block transition"
+                  >
+                    <Play className="w-4 h-4 text-white" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
         </>
       ) : (
-        <p className="text-white">Album not found</p>
+        <div className="text-center text-zinc-400 mt-20">Album not found</div>
       )}
-      
-      
     </div>
   );
 };

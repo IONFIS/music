@@ -15,7 +15,7 @@ const HomePage = () => {
     <div className="h-screen flex flex-col">
       <Topbar />
       <ScrollArea className="flex-1 overflow-y-auto scrollbar-hide">
-  <div className="p-4 space-y-4">
+  <div className=" space-y-4">
     
     <FeaturedSong title="Featured Song" query="punjabi" />
     <QuickPicks title="Quick Picks" query="hitsong"   />

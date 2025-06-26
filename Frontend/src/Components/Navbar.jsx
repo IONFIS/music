@@ -1,39 +1,37 @@
-import React, { useState } from 'react'
-import {Menu,Search,Cast, Home, Compass, Download, Library} from "lucide-react"
-
+import React from 'react';
+import { Home, Compass, Download, Library } from "lucide-react";
 
 const Navbar = () => {
-  const [isopen , setIsopen]=useState(false)
-  const toggleMenu = ()=>{
-    setIsopen(!isopen);
-  }
   return (
-    <div>
-      <nav className='bg-black'>
-        <div className=' bg-black text-white'>
-          <ul className='flex gap-[25vw] sm:gap-[40vw] ml-3 font-bold  '>
-            <li className='self-start items-start flex gap-[2vw] sm:gap-[1vw]'> <button onClick={toggleMenu}><Menu className='mt-8 sm:ml-6'/></button>
-            <img src="./cl.svg" alt="" srcset="" className='h-[10vh] w-[20vw] object-contain ' /></li>
-            
-          </ul>
+    <nav className="bg-black text-white sticky top-0 z-50">
+      <div className="flex flex-row justify-between items-center px-4 py-2 sm:px-8">
+        {/* Logo */}
+        <div className="flex items-center gap-2">
+          <img
+            src="./cl.svg"
+            alt="Logo"
+            className="h-10 w-auto object-contain"
+          />
         </div>
 
-        <div className={` lg:flex flex-grow items-center space-x-6 bg-black text-white ${isopen ? "block " : "hidden " }`}>
-          <ul className='font-serif font-bold sm:text-xl grid gap-5  ml-2 mt-[3vh]'>
-          <li className='flex gap-3 self-center items-center '><Home className='h-[4vh] w-[6vw] ' /> <span className={`${isopen ? "block translate-x-0 " : "hidden  translate-x-full"}`}> Home</span> </li>
-          <li className='flex gap-3 self-center items-center ' ><Compass className='h-[4vh] w-[6vw] ' /> <span className={`${isopen ? "block translate-x-0 " : "hidden  translate-x-full"}`}> Explore</span></li>
-          <li className='flex gap-3 self-center items-center' ><Download className='h-[4vh] w-[6vw] ' />  <span className={`${isopen ? "block translate-x-0 " : "hidden  translate-x-full"}`}> Download</span> </li>
-          <li className='flex gap-3 self-center items-center ' ><Library className='h-[4vh] w-[6vw] ' /> <span className={`${isopen ? "block translate-x-0 " : "hidden  translate-x-full"}`}> Library</span></li>
-          </ul>
-        </div>
+        {/* Nav Items (always shown on mobile) */}
+        <ul className="flex flex-row gap-4 sm:gap-6 text-sm sm:text-base font-bold">
+          <li className="flex items-center gap-1">
+            <Home className="h-5 w-5" /> <span>Home</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <Compass className="h-5 w-5" /> <span>Explore</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <Download className="h-5 w-5" /> <span>Download</span>
+          </li>
+          <li className="flex items-center gap-1">
+            <Library className="h-5 w-5" /> <span>Library</span>
+          </li>
+        </ul>
+      </div>
+    </nav>
+  );
+};
 
-
-
-
-      </nav>
-
-    </div>
-  )
-}
-
-export default Navbar
+export default Navbar;

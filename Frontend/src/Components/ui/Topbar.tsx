@@ -36,18 +36,10 @@
 // }
 
 // export default Topbar
-
-
+// TopbarWithSearch.tsx
 import { useEffect, useRef, useState } from "react";
-import { SignedOut, UserButton } from "@clerk/clerk-react";
-import { LayoutDashboardIcon, Menu, Search, X } from "lucide-react";
-import { Link } from "react-router-dom";
-import SignInAuthButton from "./SignInAuthButton";
-import { useAuthStore } from "@/stores/useAuthStore";
+import { Search, X, Trash2 } from "lucide-react";
 import { useMusicStore } from "@/stores/musicStore";
-import { useUIStore } from "@/stores/uiStore";
-import { cn } from "@/lib/utils";
-import { buttonVariants } from "./button";
 
 interface Song {
   id: string;
@@ -57,43 +49,28 @@ interface Song {
   image: string;
 }
 
+const RECENT_KEY = "recentSearches";
+
 const Topbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [songs, setSongs] = useState<Song[]>([]);
+  const [recentSongs, setRecentSongs] = useState<Song[]>([]);
   const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  const { isAdmin } = useAuthStore();
   const playSong = useMusicStore((state) => state.playSong);
   const setQueue = useMusicStore((state) => state.setQueue);
-  const {
-    mobileSidebarOpen,
-    toggleMobileSidebar,
-    mobileFriendsActivityOpen,
-    toggleMobileFriendsActivity,
-  } = useUIStore();
 
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setSearchOpen(false);
-      }
-    };
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setSearchOpen(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleEsc);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (searchOpen && inputRef.current) inputRef.current.focus();
+    if (searchOpen) {
+      document.body.style.overflow = "hidden";
+      inputRef.current?.focus();
+      const stored = localStorage.getItem(RECENT_KEY);
+      if (stored) setRecentSongs(JSON.parse(stored));
+    } else {
+      document.body.style.overflow = "unset";
+    }
   }, [searchOpen]);
 
   useEffect(() => {
@@ -106,14 +83,13 @@ const Topbar = () => {
       try {
         const res = await fetch(`https://saavn.dev/api/search/songs?query=${query}&limit=10`);
         const data = await res.json();
-        const parsed: Song[] =
-          data?.data?.results?.map((song: any) => ({
-            id: song.id,
-            name: song.name,
-            url: song.downloadUrl?.[4]?.url,
-            artist: song?.artists?.primary?.[0]?.name || "Unknown Artist",
-            image: song.image?.[1]?.url || song.image?.[0]?.url || "",
-          })) || [];
+        const parsed: Song[] = data?.data?.results?.map((song: any) => ({
+          id: song.id,
+          name: song.name,
+          url: song.downloadUrl?.[4]?.url,
+          artist: song?.artists?.primary?.[0]?.name || "Unknown Artist",
+          image: song.image?.[1]?.url || song.image?.[0]?.url || "",
+        })) || [];
         setSongs(parsed);
       } catch (err) {
         console.error("Error searching songs:", err);
@@ -126,127 +102,135 @@ const Topbar = () => {
     return () => clearTimeout(timeout);
   }, [query]);
 
+  const saveToRecent = (song: Song) => {
+    const updated = [song, ...recentSongs.filter((s) => s.id !== song.id)].slice(0, 8);
+    setRecentSongs(updated);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(updated));
+  };
+
+  const clearRecent = () => {
+    setRecentSongs([]);
+    localStorage.removeItem(RECENT_KEY);
+  };
+
   const handlePlayClick = (song: Song) => {
     playSong(song);
-    setQueue(songs);
+    setQueue([song, ...songs]);
+    saveToRecent(song);
     setSearchOpen(false);
     setQuery("");
   };
 
+  const handleEnterSearch = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && query.trim().length > 1) {
+      window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+    }
+  };
+
   return (
-    <div className="flex items-center justify-between px-4 py-3 sticky top-0 bg-zinc-900/75 backdrop-blur-md z-50 rounded-md">
-      {/* LEFT: Sidebar Hamburger */}
-      <button onClick={toggleMobileSidebar} className="text-white md:hidden">
-        {mobileSidebarOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
-      {/* CENTER */}
-      <div
-        ref={containerRef}
-        className="flex items-center gap-4 relative transition-all duration-300"
-      >
-        {/* Logo - hide on mobile when searchOpen */}
-        <img
-          src="/musical-note.svg"
-          alt="Logo"
-          className={cn(
-            "w-6 h-6 md:block transition-all",
-            searchOpen ? "hidden sm:block" : "block"
-          )}
-        />
-        <span className="hidden md:block ">Beat Hive</span>
-
-        {/* Search Bar */}
-        <div
-          className={cn(
-            "flex items-center sm:ml-72  text-white bg-zinc-800 transition-all duration-300 rounded-full overflow-hidden",
-            searchOpen ? "w-72 pl-3 pr-2 py-1 shadow-md border" : "w-10 h-10 justify-center"
-          )}
-        >
-          <Search
-            size={24}
+    <>
+      <div className="sticky top-0 z-40 bg-gradient-to-r from-black via-zinc-900 to-black px-6 py-3 shadow-md backdrop-blur-md">
+        <div className="flex items-center justify-between w-full max-w-6xl mx-auto">
+          <div className="flex items-center gap-2">
+            <img src="/musical-note.svg" alt="Logo" className="w-7 h-7" />
+            <h1 className="text-white font-bold text-lg">Beat Hive</h1>
+          </div>
+          <button
             onClick={() => setSearchOpen(true)}
-            className={cn("text-pink-300 cursor-pointer", searchOpen ? "mr-2" : "")}
-          />
-          {searchOpen && (
+            className="flex items-center gap-1 text-white hover:text-pink-400 transition"
+          >
+            <Search size={22} />
+            <span className="hidden sm:inline text-sm">Search</span>
+          </button>
+        </div>
+      </div>
+
+      {searchOpen && (
+        <div className="fixed inset-0 z-50 bg-zinc-950 bg-opacity-95 p-6 flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-semibold text-white">Search Songs</h2>
+            <button
+              onClick={() => {
+                setSearchOpen(false);
+                setQuery("");
+              }}
+              className="text-white hover:text-red-400 transition"
+            >
+              <X size={28} />
+            </button>
+          </div>
+
+          <div className="flex items-center bg-zinc-800 text-white rounded-full px-4 py-2 mb-4">
+            <Search size={22} className="mr-2 text-pink-400" />
             <input
               ref={inputRef}
               type="text"
-              placeholder="Search songs..."
-              className="bg-transparent outline-none text-sm w-full"
+              placeholder="Search for songs..."
+              className="bg-transparent outline-none w-full text-sm"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleEnterSearch}
             />
-          )}
-        </div>
-
-        {/* Admin Button - hide on mobile if search is open */}
-       <div className=""> {isAdmin && (
-          <Link
-            to="/admin"
-            className={cn(
-              buttonVariants({ variant: "outline" }),
-              "text-sm",
-              searchOpen ? "hidden sm:flex" : "flex"
-            )}
-          >
-            <LayoutDashboardIcon className="size-4 mr-2" />
-            Admin
-          </Link>
-        )}</div>
-
-        {/* User / Sign In - hide on mobile if search is open */}
-        <SignedOut>
-          <div className={cn(searchOpen ? "hidden sm:block" : "block")}>
-            <SignInAuthButton />
           </div>
-        </SignedOut>
-        <div className={cn(searchOpen ? "hidden sm:block" : "block")}>
-          <UserButton />
-        </div>
 
-        {/* Search Results Dropdown */}
-        {searchOpen && query.trim() && (
-          <div className="absolute top-full mt-2 max-w-96 max-h-96 overflow-y-auto bg-zinc-800 rounded-lg shadow-lg z-50 scrollbar-hide p-2">
-            {loading ? (
-              <div className="p-4 text-sm text-gray-400 text-center">Searching...</div>
-            ) : songs.length > 0 ? (
-              songs.map((song) => (
-                <div
-                  key={song.id}
-                  onClick={() => handlePlayClick(song)}
-                  className="w-full rounded-lg mb-2 cursor-pointer group flex items-center gap-3 hover:bg-zinc-700 p-2"
-                >
-                  <img src={song.image} alt={song.name} className="w-12 h-12 object-cover rounded" />
-                  <div className="flex-1 overflow-hidden">
-                    <h3 className="text-sm font-semibold text-white truncate">{song.name}</h3>
-                    <p className="text-xs text-gray-400 truncate">{song.artist}</p>
-                  </div>
+          <div className="overflow-y-auto flex-1 scrollbar-hide space-y-4">
+            {recentSongs.length > 0 && !query.trim() && (
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h4 className="text-gray-400 text-sm">Recent Searches</h4>
+                  <button onClick={clearRecent} className="text-gray-400 hover:text-red-400 text-sm flex items-center gap-1">
+                    <Trash2 size={14} /> Clear
+                  </button>
                 </div>
-              ))
-            ) : (
-              <div className="p-4 text-sm text-gray-500 text-center">No results found</div>
+                {recentSongs.map((song) => (
+                  <div
+                    key={song.id}
+                    onClick={() => handlePlayClick(song)}
+                    className="flex items-center gap-4 p-2 hover:bg-zinc-800 rounded-lg cursor-pointer"
+                  >
+                    <img src={song.image} className="w-10 h-10 object-cover rounded" />
+                    <div>
+                      <p className="text-white text-sm">{song.name}</p>
+                      <p className="text-gray-400 text-xs">{song.artist}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {query.trim() && (
+              <div>
+                <h4 className="text-gray-400 text-sm mb-2">Search Results</h4>
+                {loading ? (
+                  <p className="text-sm text-gray-400 text-center">Searching...</p>
+                ) : songs.length > 0 ? (
+                  songs.map((song) => (
+                    <div
+                      key={song.id}
+                      onClick={() => handlePlayClick(song)}
+                      className="flex items-center gap-4 p-2 hover:bg-zinc-800 rounded-lg cursor-pointer"
+                    >
+                      <img src={song.image} className="w-10 h-10 object-cover rounded" />
+                      <div>
+                        <p className="text-white text-sm">{song.name}</p>
+                        <p className="text-gray-400 text-xs">{song.artist}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400 text-center">No results found</p>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* RIGHT: Friends Activity Hamburger */}
-      <button onClick={toggleMobileFriendsActivity} className="text-white md:hidden">
-        {mobileFriendsActivityOpen ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
-      {/* Hide scrollbar styles */}
-      <style>{`
-        .scrollbar-hide::-webkit-scrollbar {
-          display: none;
-        }
-        .scrollbar-hide {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-        }
-      `}</style>
-    </div>
+          <style>{`
+            .scrollbar-hide::-webkit-scrollbar { display: none; }
+            .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+          `}</style>
+        </div>
+      )}
+    </>
   );
 };
 
