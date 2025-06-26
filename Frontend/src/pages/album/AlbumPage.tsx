@@ -143,7 +143,7 @@ const AlbumPage = () => {
                   </p>
                   <button
                     onClick={() => handlePlay(song)}
-                    className="ml-2 bg-purple-600 hover:bg-purple-700 p-2 rounded-full  group-hover:block transition"
+                    className="ml-2 bg-purple-600 hover:bg-purple-700 p-2 rounded-full group-hover:block transition"
                   >
                     <Play className="w-4 h-4 text-white" />
                   </button>
@@ -151,6 +151,7 @@ const AlbumPage = () => {
               ))}
             </div>
           </div>
+          {/* hello */}
         </>
       ) : (
         <div className="text-center text-zinc-400 mt-20">Album not found</div>
