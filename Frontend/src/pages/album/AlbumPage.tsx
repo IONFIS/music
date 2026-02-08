@@ -41,7 +41,7 @@ const AlbumPage = () => {
   useEffect(() => {
     const fetchAlbum = async () => {
       try {
-        const res = await fetch(`https://saavn.dev/api/albums?id=${albumId}`);
+        const res = await fetch(`https://saavn.sumit.co/api/albums?id=${albumId}`);
         if (!res.ok) throw new Error(`Failed to fetch: ${res.status}`);
         const data = await res.json();
 

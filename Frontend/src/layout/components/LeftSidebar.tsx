@@ -32,7 +32,7 @@ const LeftSidebar = () => {
         const fetchAlbums = async () => {
           try {
             const response = await fetch(
-        'https://saavn.dev/api/search/albums?query=movies&limit=100'
+        'https://saavn.sumit.co/api/search/albums?query=movies&limit=100'
             );
             if (!response.ok) throw new Error(`Server error: ${response.status}`);
     

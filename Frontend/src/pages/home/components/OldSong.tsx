@@ -32,7 +32,7 @@ const oldSong: React.FC<Props> = ({ title, query }) => {
       setError(null);
       try {
         const response = await fetch(
-          `https://saavn.dev/api/search/songs?query=${query}&limit=30`
+          `https://saavn.sumit.co/api/search/songs?query=${query}&limit=30`
         );
         if (!response.ok) throw new Error(`Server error: ${response.status}`);
 

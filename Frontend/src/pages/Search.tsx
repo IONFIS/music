@@ -57,8 +57,8 @@ const SearchResultsPage = () => {
       try {
         if (activeTab === "music") {
           const [topRes, randomRes] = await Promise.all([
-            fetch(`https://saavn.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=5`),
-            fetch("https://saavn.dev/api/search/songs?query=songs&limit=50"),
+            fetch(`https://saavn.sumit.co/api/search/songs?query=${encodeURIComponent(query)}&limit=5`),
+            fetch("https://saavn.sumit.co/api/search/songs?query=songs&limit=50"),
           ]);
 
           const topData = await topRes.json();
@@ -76,7 +76,7 @@ const SearchResultsPage = () => {
           setTopSongs(parse(topData));
           setRandomSongs(parse(randomData));
         } else {
-          const res = await fetch(`https://saavn.dev/api/search/albums?query=${encodeURIComponent(query)}&limit=10`);
+          const res = await fetch(`https://saavn.sumit.co/api/search/albums?query=${encodeURIComponent(query)}&limit=10`);
           const data = await res.json();
           setAlbums(data.data.results || []);
         }

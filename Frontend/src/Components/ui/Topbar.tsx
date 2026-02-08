@@ -81,7 +81,7 @@ const Topbar = () => {
       }
       setLoading(true);
       try {
-        const res = await fetch(`https://saavn.dev/api/search/songs?query=${query}&limit=10`);
+        const res = await fetch(`https://saavn.sumit.co/api/search/songs?query=${query}&limit=10`);
         const data = await res.json();
         const parsed: Song[] = data?.data?.results?.map((song: any) => ({
           id: song.id,
